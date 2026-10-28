@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Briefly - Turn Client Requests Into Clear Project Briefs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div class="bg-animated">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+        <canvas id="particles-canvas"></canvas>
+    </div>
+
+    <nav class="nav" id="main-nav" style="display: none;">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-mark">BRIEFLY</span>
+                <span class="brand-dot"></span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" id="nav-dashboard">Dashboard</button>
+                <button class="nav-btn" id="nav-new-project">New Brief</button>
+                <div class="nav-user">
+                    <span id="nav-user-email" class="nav-user-email"></span>
+                    <button class="nav-btn nav-btn-logout" id="nav-logout">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section id="auth-screen" class="screen active">
+        <div class="auth-container">
+            <div class="auth-hero">
+                <div class="auth-kicker">PROJECT BRIEF GENERATOR</div>
+                <h1 class="auth-title">Briefly</h1>
+                <p class="auth-subtitle">Transform vague client requests into crystal-clear project briefs with structure, direction, and precision.</p>
+                <div class="auth-features">
+                    <div class="auth-feature"><div class="feature-dot"></div><span>Tailored forms for every project type</span></div>
+                    <div class="auth-feature"><div class="feature-dot"></div><span>Professional PDF exports</span></div>
+                    <div class="auth-feature"><div class="feature-dot"></div><span>Secure, private project storage</span></div>
+                </div>
+            </div>
+            <div class="auth-panel">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Sign In</button>
+                    <button class="auth-tab" data-tab="signup">Create Account</button>
+                </div>
+                <form id="login-form" class="auth-form active">
+                    <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required autocomplete="email"></div>
+                    <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required autocomplete="current-password"></div>
+                    <button type="submit" class="btn btn-primary btn-full"><span>Sign In</span><span class="btn-arrow">→</span></button>
+                    <div id="login-error" class="form-error"></div>
+                </form>
+                <form id="signup-form" class="auth-form">
+                    <div class="form-group"><label for="signup-email">Email</label><input type="email" id="signup-email" required autocomplete="email"></div>
+                    <div class="form-group"><label for="signup-password">Password</label><input type="password" id="signup-password" required minlength="6" autocomplete="new-password"><small class="form-hint">Minimum 6 characters</small></div>
+                    <div class="form-group"><label for="signup-fullname">Full Name</label><input type="text" id="signup-fullname" required autocomplete="name"></div>
+                    <button type="submit" class="btn btn-primary btn-full"><span>Create Account</span><span class="btn-arrow">→</span></button>
+                    <div id="signup-error" class="form-error"></div>
+                    <div id="signup-success" class="form-success"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section id="dashboard-screen" class="screen">
+        <div class="container">
+            <header class="page-header">
+                <div><div class="page-kicker">YOUR PROJECTS</div><h1 class="page-title">Dashboard</h1><p class="page-subtitle">Manage and organize all your project briefs</p></div>
+                <button class="btn btn-primary" id="dashboard-new-project"><span>+ New Brief</span></button>
+            </header>
+            <div id="projects-grid" class="projects-grid"></div>
+            <div id="no-projects" class="empty-state" style="display:none;"><div class="empty-icon">◇</div><h2>No briefs yet</h2><p>Create your first project brief to get started</p><button class="btn btn-primary" id="empty-new-project"><span>Create First Brief</span></button></div>
+        </div>
+    </section>
+
+    <section id="project-form-screen" class="screen">
+        <div class="container">
+            <header class="page-header">
+                <div><div class="page-kicker">PROJECT SETUP</div><h1 class="page-title" id="form-title">Create New Brief</h1><p class="page-subtitle">Fill in the details to generate your professional brief</p></div>
+                <div class="header-actions"><button class="btn btn-ghost" id="form-cancel">Cancel</button><button class="btn btn-primary" id="form-save-draft"><span>Save Draft</span></button></div>
+            </header>
+            <form id="project-form" novalidate>
+                <section class="form-section"><div class="section-header"><h2>Basic Information</h2><div class="section-line"></div></div>
+                    <div class="form-row"><div class="form-group form-group-full"><label for="project-name">Project Name *</label><input type="text" id="project-name" required placeholder="e.g., Acme Corp Rebrand"></div></div>
+                    <div class="form-row"><div class="form-group"><label for="project-type">Project Type *</label><select id="project-type" required><option value="">Select type...</option><option value="logo">Logo Design</option><option value="branding">Branding & Identity</option><option value="social">Social Media</option><option value="web">Web Design</option></select></div>
+                    <div class="form-group"><label for="client-name">Client Name</label><input type="text" id="client-name" placeholder="e.g., John Smith"></div></div>
+                </section>
+                <section class="form-section"><div class="section-header"><h2>Project Goals</h2><div class="section-line"></div></div><div class="form-row"><div class="form-group form-group-full"><label for="goals">What are the main goals for this project? *</label><textarea id="goals" rows="4" required placeholder="Describe the primary objectives..."></textarea></div></div></section>
+                <section class="form-section"><div class="section-header"><h2>Target Audience</h2><div class="section-line"></div></div><div class="form-row"><div class="form-group form-group-full"><label for="target-audience">Who is this project for? *</label><textarea id="target-audience" rows="4" required placeholder="Demographics, interests, needs..."></textarea></div></div></section>
+                <section class="form-section"><div class="section-header"><h2>Visual Direction</h2><div class="section-line"></div></div><div class="form-row"><div class="form-group form-group-full"><label for="visual-direction">Desired style/aesthetic *</label><textarea id="visual-direction" rows="4" required placeholder="Modern, minimalist, bold, vintage, etc. Any references?"></textarea></div></div><div class="form-row"><div class="form-group form-group-full"><label for="colors">Color Preferences</label><input type="text" id="colors" placeholder="e.g., #FF6B6B, navy blue, earthy tones"></div></div></section>
+                <section class="form-section"><div class="section-header"><h2>Deliverables</h2><div class="section-line"></div></div><div class="form-row"><div class="form-group form-group-full"><label for="deliverables">What needs to be delivered? *</label><textarea id="deliverables" rows="4" required placeholder="Files, formats, sizes needed..."></textarea></div></div></section>
+                <section class="form-section"><div class="section-header"><h2>Requirements & Constraints</h2><div class="section-line"></div></div><div class="form-row"><div class="form-group form-group-full"><label for="requirements">Specific requirements, must-haves, or constraints</label><textarea id="requirements" rows="4" placeholder="Style guidelines, do's/don'ts, technical requirements..."></textarea></div></div></section>
+                <section class="form-section"><div class="section-header"><h2>Additional Notes</h2><div class="section-line"></div></div><div class="form-row"><div class="form-group form-group-full"><label for="client-notes">Client notes or extra context</label><textarea id="client-notes" rows="4" placeholder="Any additional information from the client..."></textarea></div></div></section>
+                <div class="form-actions"><button type="button" class="btn btn-ghost" id="form-back-dashboard">Back to Dashboard</button><button type="submit" class="btn btn-primary btn-large"><span>Generate Brief</span><span class="btn-arrow">→</span></button></div>
+            </form>
+        </div>
+    </section>
+
+    <section id="preview-screen" class="screen">
+        <div class="container">
+            <header class="page-header">
+                <div><div class="page-kicker">PROJECT BRIEF</div><h1 class="page-title" id="preview-project-name">Project Brief</h1><p class="page-subtitle">Review, edit, copy, or export your brief</p></div>
+                <div class="header-actions"><button class="btn btn-ghost" id="preview-back">Back</button><button class="btn btn-ghost" id="preview-edit">Edit</button><button class="btn btn-ghost" id="preview-copy">Copy to Clipboard</button><button class="btn btn-primary" id="preview-export-pdf"><span>Export as PDF</span></button></div>
+            </header>
+            <div class="preview-container">
+                <article id="brief-content" class="brief-article">
+                    <header class="brief-header"><div class="brief-kicker">PROJECT BRIEF</div><h1 id="brief-title" class="brief-main-title"></h1><div class="brief-meta"><div class="brief-meta-item"><span class="brief-meta-label">PROJECT TYPE</span><span id="brief-type" class="brief-meta-value"></span></div><div class="brief-meta-item" id="brief-client-wrapper"><span class="brief-meta-label">CLIENT</span><span id="brief-client" class="brief-meta-value"></span></div><div class="brief-meta-item"><span class="brief-meta-label">CREATED</span><span id="brief-date" class="brief-meta-value"></span></div></div></header>
+                    <section class="brief-section"><div class="brief-section-header"><h2>Goals</h2><div class="brief-section-line"></div></div><p id="brief-goals" class="brief-text"></p></section>
+                    <section class="brief-section"><div class="brief-section-header"><h2>Target Audience</h2><div class="brief-section-line"></div></div><p id="brief-audience" class="brief-text"></p></section>
+                    <section class="brief-section"><div class="brief-section-header"><h2>Visual Direction</h2><div class="brief-section-line"></div></div><p id="brief-visual" class="brief-text"></p><div id="brief-colors-wrapper" class="brief-subsection"><h3>Color Preferences</h3><p id="brief-colors" class="brief-text"></p></div></section>
+                    <section class="brief-section"><div class="brief-section-header"><h2>Deliverables</h2><div class="brief-section-line"></div></div><p id="brief-deliverables" class="brief-text"></p></section>
+                    <section class="brief-section" id="brief-requirements-wrapper"><div class="brief-section-header"><h2>Requirements & Constraints</h2><div class="brief-section-line"></div></div><p id="brief-requirements" class="brief-text"></p></section>
+                    <section class="brief-section" id="brief-notes-wrapper"><div class="brief-section-header"><h2>Additional Notes</h2><div class="brief-section-line"></div></div><p id="brief-notes" class="brief-text"></p></section>
+                </article>
+            </div>
+        </div>
+    </section>
+    <div id="toast" class="toast"></div>
+    <script src="app.js"></script>
+</body>
+</html>
